@@ -1,92 +1,52 @@
-#install tidyverse and ggplot within tidy verse
-install.packages("tidyverse")
-install.packages("ggplot2")
-install.packages("dplyr")
-install.packages("readxl")
-install.packages("writexl")
-install.packages("fuzzyjoin")
-install.packages("cli")
-
 library(ggplot2)
-library(readxl)
-library(writexl)
 library(dplyr)
-library(fuzzyjoin)
+library(forcats)  # Load the 'forcats' package
 
-# read and install cardata into workable dataframe. 
-cardat = "carbitrage.xlsx"
-cardatwb = read_excel(cardat)
+# read and install cardata into a workable dataframe. 
+cardat = read.csv("carbitrage.csv")
 
-# convert to lowercase, remove spaces
-normcarcounts = function(category){
-  category = tolower(category)
-  category = gsub(" ", "", category)
-  return(category)
-}
+# this adjusts all text to lowercase
+cardat = cardat %>%
+  mutate(make = tolower(make),
+         model = tolower(model))
 
-# normalize make and model columns
-cardatwb = cardatwb %>%
-  mutate(
-    make = normcarcounts(make),
-    model = normcarcounts(model)
-  )
-
-# find similar makes and models
-makesim = stringdist_left_join(cardatwb, cardatwb, by = c("make" = "make"), method = "lv", max_dist = 2)
-modelsim = stringdist_left_join(cardatwb, cardatwb, by = c("model" = "model"), method = "lv", max_dist = 2)
-
-# function to group similar strings
-groupcarstrings = function(similarities) {
-  groups = list()
-  for (i in unique(similarities$x.id)) {
-    group = simiiliarities$similarities[similarities$x.id == i, "y.id"]
-    groups[[length(groups) + 1]] = unique(c(i, group))
-  }
-  return(groups)
-}
-
-
-# clean data, normalize and unify categories, and adjust for misspellings.
-
-vocabstrings = function(similarity_matrix){
-  simgroups = list()
-  for (string in input_vector) {
-    matchedgroup = NULL
-    for (group in simgroups) {
-      if (any(stringdist::stringdistmatrix(string, group) <= threshold)) {
-        matchedgroup = group
-        break
-      }
-    }
-    if (is.null(matchedgroup)) {
-      simgroups[[length(simgroups) + 1]] = string
-    } else {
-      matchedgroup[[length(matchedgroup) + 1]] = string
-    }
-  }
-  return(simgroups)
-}
-
-
-
-
-# create visualization set up
-carcounts = cardatwb %>%
+#this groups and counts the cars by make and model
+carcounts = cardat %>%
   group_by(make, model) %>%
-  summarize(count = n()) %>%
-  arrange(desc(count))
+  summarize(count = n())
 
-#create visualization 1: A visualization that illustrates what makes and models of cars are most popular, using ggplot
-ggplot(carcounts, aes(x = reorder(paste(make, model), -count), y = count)) +
+# Select the top 15 most popular car makes and models
+top20carcounts = carcounts %>%
+  mutate(make_model = paste(make, model, sep = " ")) %>%
+  filter(count > 500) %>%
+  arrange(desc(count)) %>%
+  head(20)
+
+# Clean the "make_model" column to remove leading and trailing whitespace
+top20carcounts$make_model <- trimws(top20carcounts$make_model)
+
+# Filter out "Ford" and blank values from the plot
+top20carcounts <- top20carcounts %>%
+  filter(!(make_model %in% c("ford", "")))
+
+# Create the ggplot visualization for the modified data
+ggplot(top20carcounts,
+       aes(x = fct_reorder(make_model, count), y = count)) +
   geom_bar(stat = "identity", fill = "skyblue") +
+  geom_text(aes(label = count), vjust = -0.5, size = 3) +  # Add count labels
   coord_flip() +
   labs(
-    tile = "Most Popular Car Makes and Models", 
+    title = "Ford F150 Leads Top 20 Most Popular Vehicles for Sale",
+    subtitle = "Craigslist Carbitrage Dataset",
     x = "Make and Model",
     y = "Count"
   ) +
   theme_minimal() +
   theme(
     axis.text.y = element_text(size = 8),
-    plot.title = element_text(hjust = 0.5)
+    plot.title = element_text(hjust = 0.5),
+    plot.subtitle = element_text(hjust = 0.5)
   )
+
+####
+
