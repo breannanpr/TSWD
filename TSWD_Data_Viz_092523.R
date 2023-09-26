@@ -33,7 +33,8 @@ cardatwb = cardatwb %>%
 
 # find similar makes and models
 makesim = stringdist_left_join(cardatwb, cardatwb, by = c("make" = "make"), method = "lv", max_dist = 2)
-modelsim = stringdist::stringdistmatrix(cardatwb$model, cardatwb$model) <= 1
+modelsim = stringdist_left_join(cardatwb, cardatwb, by = c("model" = "model"), method = "lv", max_dist = 2)
+
 
 # clean data, normalize and unify categories, and adjust for misspellings.
 
@@ -80,10 +81,3 @@ ggplot(carcounts, aes(x = reorder(paste(make, model), -count), y = count)) +
     axis.text.y = element_text(size = 8),
     plot.title = element_text(hjust = 0.5)
   )
-
-
-
-
-
-dramdat = read.table("dram_shop.xlsx")
-unhoused = read.table("unhoused.xlsx")
