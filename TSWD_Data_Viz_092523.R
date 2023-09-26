@@ -32,7 +32,7 @@ top20carcounts <- top20carcounts %>%
 # Create the ggplot visualization for the modified data
 ggplot(top20carcounts,
        aes(x = fct_reorder(make_model, count), y = count)) +
-  geom_bar(stat = "identity", fill = "skyblue") +
+  geom_bar(stat = "identity", fill = "mediumorchid3") +
   geom_text(aes(label = count), vjust = -0.5, size = 3) +  # Add count labels
   coord_flip() +
   labs(
@@ -43,10 +43,11 @@ ggplot(top20carcounts,
   ) +
   theme_minimal() +
   theme(
-    axis.text.y = element_text(size = 8),
-    plot.title = element_text(hjust = 0.5),
-    plot.subtitle = element_text(hjust = 0.5)
+    axis.text.y = element_text(size = 9),
+    plot.title = element_text(hjust = 0),
+    plot.subtitle = element_text(hjust = 0)
   )
 
 ####
+
 
