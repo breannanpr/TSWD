@@ -35,6 +35,16 @@ cardatwb = cardatwb %>%
 makesim = stringdist_left_join(cardatwb, cardatwb, by = c("make" = "make"), method = "lv", max_dist = 2)
 modelsim = stringdist_left_join(cardatwb, cardatwb, by = c("model" = "model"), method = "lv", max_dist = 2)
 
+# function to group similar strings
+groupcarstrings = function(similarities) {
+  groups = list()
+  for (i in unique(similarities$x.id)) {
+    group = simiiliarities$similarities[similarities$x.id == i, "y.id"]
+    groups[[length(groups) + 1]] = unique(c(i, group))
+  }
+  return(groups)
+}
+
 
 # clean data, normalize and unify categories, and adjust for misspellings.
 
@@ -57,11 +67,10 @@ vocabstrings = function(similarity_matrix){
   return(simgroups)
 }
 
-# prep data, count frequency for each make and model.
 
 
 
-
+# create visualization set up
 carcounts = cardatwb %>%
   group_by(make, model) %>%
   summarize(count = n()) %>%
