@@ -49,5 +49,67 @@ ggplot(top20carcounts,
   )
 
 ####
+library(ggplot2)
+library(dplyr)
+library(lubridate)  # Load the 'lubridate' package for date manipulation
+library(patchwork)  # Load the 'patchwork' package
 
+# Read and install the car data into a workable dataframe.
+cardat <- read.csv("carbitrage.csv")
+
+# Convert the 'time_posted' column to a datetime object
+cardat$time_posted <- as.POSIXct(cardat$time_posted, format = "%Y-%m-%d %H:%M:%S")
+
+# Extract day and week information
+cardat <- cardat %>%
+  mutate(day = as.Date(time_posted),
+         week = lubridate::floor_date(time_posted, unit = "week"))
+
+# Group by day and calculate the count of new cars posted
+daily_counts <- cardat %>%
+  group_by(day) %>%
+  summarize(count = n())
+
+# Group by week and calculate the count of new cars posted
+weekly_counts <- cardat %>%
+  group_by(week) %>%
+  summarize(count = n())
+
+# Create a ggplot for daily counts
+daily_plot <- ggplot(daily_counts, aes(x = day, y = count)) +
+  geom_line(color = "blue") +
+  labs(
+    title = "Rate of New Cars Posted by Day",
+    x = "Date",
+    y = "Count"
+  ) +
+  theme_minimal() +
+  geom_text(
+    aes(label = count),
+    vjust = -0.5,
+    size = 3,
+    hjust = 1
+  )  # Add count labels
+
+# Create a ggplot for weekly counts
+weekly_plot <- ggplot(weekly_counts, aes(x = week, y = count)) +
+  geom_line(color = "red") +
+  labs(
+    title = "Rate of New Cars Posted by Week",
+    x = "Week",
+    y = "Count"
+  ) +
+  theme_minimal() +
+  geom_text(
+    aes(label = count),
+    vjust = -0.5,
+    size = 3,
+    hjust = 1
+  )  # Add count labels
+
+# Arrange the plots using 'patchwork' side by side
+combined_plot <- daily_plot / weekly_plot
+
+# Display the combined plot
+combined_plot
 
