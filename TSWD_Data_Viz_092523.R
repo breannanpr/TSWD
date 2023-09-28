@@ -1,6 +1,6 @@
 library(ggplot2)
 library(dplyr)
-library(forcats)  # Load the 'forcats' package
+library(forcats)
 
 # read and install cardata into a workable dataframe. 
 cardat = read.csv("carbitrage.csv")
@@ -51,65 +51,68 @@ ggplot(top20carcounts,
 ####
 library(ggplot2)
 library(dplyr)
-library(lubridate)  # Load the 'lubridate' package for date manipulation
-library(patchwork)  # Load the 'patchwork' package
+library(lubridate)
+library(patchwork)
 
 # Read and install the car data into a workable dataframe.
-cardat <- read.csv("carbitrage.csv")
+cardat = read.csv("carbitrage.csv")
 
 # Convert the 'time_posted' column to a datetime object
-cardat$time_posted <- as.POSIXct(cardat$time_posted, format = "%Y-%m-%d %H:%M:%S")
+cardat$time_posted = as.POSIXct(cardat$time_posted, format = "%Y-%m-%d %H:%M:%S")
 
 # Extract day and week information
-cardat <- cardat %>%
+cardat = cardat %>%
   mutate(day = as.Date(time_posted),
-         week = lubridate::floor_date(time_posted, unit = "week"))
+         week = lubridate::floor_date(time_posted, unit = "week"),
+         weekday = weekdays(day))  # Extract weekday information
 
 # Group by day and calculate the count of new cars posted
-daily_counts <- cardat %>%
-  group_by(day) %>%
+dailycarcounts = cardat %>%
+  group_by(day, weekday) %>%
   summarize(count = n())
 
-# Group by week and calculate the count of new cars posted
-weekly_counts <- cardat %>%
-  group_by(week) %>%
-  summarize(count = n())
+# Find the top day(s) of the week for posting
+topcardays = dailycarcounts %>%
+  group_by(weekday) %>%
+  summarize(total_count = sum(count)) %>%
+  filter(total_count == max(total_count)) %>%
+  pull(weekday)
+
+# Find the lowest count value(s)
+lowestcarcount = min(dailycarcounts$count)
 
 # Create a ggplot for daily counts
-daily_plot <- ggplot(daily_counts, aes(x = day, y = count)) +
-  geom_line(color = "blue") +
+dailycarplot = ggplot(dailycarcounts, aes(x = day, y = count)) +
+  geom_line() +
+  geom_text(
+    aes(label = ifelse(weekday %in% topcardays, as.character(count), "")),
+    vjust = -0.5,
+    size = 3,
+    hjust = 1
+  ) +
+  geom_point(data = dailycarcounts %>%
+               filter(weekday %in% topcardays),
+             aes(x = day, y = count),
+             color = "maroon",
+             size = 3) +
+  geom_point(data = dailycarcounts %>%
+               filter(count == lowestcarcount),
+             aes(x = day, y = count),
+             color = "skyblue",
+             size = 3)+
   labs(
-    title = "Rate of New Cars Posted by Day",
+    title = "Slump Revealed in Daily Car Listings",
+    subtitle = "Service Interruption Disrupts Steady Ebb and Flows",
     x = "Date",
     y = "Count"
   ) +
   theme_minimal() +
-  geom_text(
-    aes(label = count),
-    vjust = -0.5,
-    size = 3,
-    hjust = 1
-  )  # Add count labels
+  theme(axis.text.x = element_text(angle = 0, hjust = 1)) +
+  theme(axis.text.y = element_text(angle = 0, hjust = 1)) +
+  scale_x_date(
+    date_breaks = "20 days",
+    date_labels = "%m-%d"
+  )
 
-# Create a ggplot for weekly counts
-weekly_plot <- ggplot(weekly_counts, aes(x = week, y = count)) +
-  geom_line(color = "red") +
-  labs(
-    title = "Rate of New Cars Posted by Week",
-    x = "Week",
-    y = "Count"
-  ) +
-  theme_minimal() +
-  geom_text(
-    aes(label = count),
-    vjust = -0.5,
-    size = 3,
-    hjust = 1
-  )  # Add count labels
-
-# Arrange the plots using 'patchwork' side by side
-combined_plot <- daily_plot / weekly_plot
-
-# Display the combined plot
-combined_plot
-
+# Display the daily plot
+dailycarplot
