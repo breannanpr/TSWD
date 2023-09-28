@@ -1,3 +1,4 @@
+##### VISUALIZATION ONE - EASY #####
 library(ggplot2)
 library(dplyr)
 library(forcats)
@@ -48,7 +49,7 @@ ggplot(top20carcounts,
     plot.subtitle = element_text(hjust = 0)
   )
 
-####
+##### VISUALIZATION TWO - EASY #####
 library(ggplot2)
 library(dplyr)
 library(lubridate)
@@ -116,3 +117,112 @@ dailycarplot = ggplot(dailycarcounts, aes(x = day, y = count)) +
 
 # Display the daily plot
 dailycarplot
+
+##### VISUALIZATION THREE - EASY #####
+library(ggplot2)
+
+# Read and install the car data into a workable dataframe.
+cardat = read.csv("carbitrage.csv")
+
+# Convert 'time_posted' to date format
+cardat$time_posted = as.Date(cardat$time_posted)
+
+# Aggregate posting counts by day and city
+postingrates = cardat %>%
+  group_by(location, day = as.Date(time_posted)) %>%
+  summarize(posting_count = n())
+
+# Include top 20 locations (city)
+top20locations = postingrates %>%
+  group_by(location) %>%
+  summarize(total_posting_count = sum(posting_count)) %>%
+  arrange(desc(total_posting_count)) %>%
+  head(20)  # Adjust the number as needed
+
+# Filter the posting rates data to include only the top 20 locations
+filteredpostrates = postingrates %>%
+  filter(location %in% top20locations$location)
+
+# heat map plot
+ggplot(filteredpostrates, aes(x = day, y = reorder(location, posting_count), fill = posting_count)) +
+  geom_tile() +
+  scale_fill_gradient(low = "white", high = "forestgreen") +
+  labs(
+    title = "San Francisco / Bay Area in Top 20 High Frequency Posting Trends",
+    subtitle = "Heatmap of posting rates by city and day (Top 20 Locations)",
+    x = "Day",
+    y = "City",
+    fill = "Posting Count"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 0, hjust = 1),
+    axis.title.x = element_text(hjust = 0.5),
+    axis.title.y = element_text(angle = 0, vjust = 1, hjust = 0),
+    axis.text.y = element_text(angle = 0, hjust = 1)
+  )
+
+##### VISUALIZATION FOUR - MEDIUM #####
+library(ggplot2)
+library(dplyr)
+
+#read in data
+cardat = read.csv("carbitrage.csv")
+
+# create a plot to address by location
+ggplot(cardat, aes(x = time_posted, fill = location)) +
+  geom_histogram(binwidth = 3600, position = "dodge") +  # Adjust binwidth as needed for time intervals (1 hour in seconds)
+  labs(
+    title = "Car Posting Trends by Location",
+    x = "Time Posted",
+    y = "Posting Count",
+    fill = "Location"
+  ) +
+  theme_minimal() +
+  theme(
+    legend.position = "bottom"  # Adjust the legend position
+  )
+
+##### VISUALIZATION FIVE - HARD #####
+library(ggplot2)
+library(dplyr)
+library(scales)
+
+#read in data
+cardat = read.csv("carbitrage.csv")
+
+#specify parameters
+subimake = "subaru"
+subimodel = "forester"
+minyear = 2005
+maxyear = 2023
+
+# filter data based on parameters listed above
+subidat = cardat %>%
+  filter(make == subimake,
+         model == subimodel,
+         year >= minyear,
+         year <= maxyear,
+         odometer < 300000)
+
+#create scatter plot for age vs mileage with price as size
+ggplot(subidat, aes(x = year, y = odometer, color = price)) +
+  geom_point(alpha = 5) +
+  labs(
+    title = "Unlocking Forester Resale Values",
+    subtitle = "Newer, Low-Mileage Subarus Demand Top Dollar!",
+    x = "Year",
+    y = "Mileage",
+    color = "Price"
+  ) +
+  scale_size_continuous(range = c(5, 10), labels = comma) +
+  scale_color_gradient(low = "blue", high = "red") +
+  scale_shape_manual(values = c(20, 19)) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 0, hjust = 1),
+    axis.title.x = element_text(hjust = 0.5),
+    axis.title.y = element_text(angle = 0, vjust = 1, hjust = 0),
+    axis.text.y = element_text(angle = 0, hjust = 1)
+  ) +
+  scale_y_continuous(labels = scales::number_format(scale = 1e-3, suffix = "K"))
