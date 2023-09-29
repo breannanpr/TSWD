@@ -169,19 +169,37 @@ library(dplyr)
 #read in data
 cardat = read.csv("carbitrage.csv")
 
-# create a plot to address by location
-ggplot(cardat, aes(x = time_posted, fill = location)) +
-  geom_histogram(binwidth = 3600, position = "dodge") +  # Adjust binwidth as needed for time intervals (1 hour in seconds)
+# Extract day of the week, hour of the day, and time intervals from the timestamp
+cardat = cardat %>%
+  mutate(day_of_week = weekdays(as.POSIXct(time_posted, format = "%Y-%m-%d %H:%M:%S")),
+         hour_of_day = format(as.POSIXct(time_posted, format = "%Y-%m-%d %H:%M:%S"), "%H"),
+         time_interval = cut(as.numeric(hour_of_day), breaks = c(0, 6, 12, 18, 24), 
+                             labels = c("Night", "Morning", "Afternoon", "Evening"), include.lowest = TRUE))
+# Calculate the count variable for each combination of day_of_week and time_interval
+count_data = cardat %>%
+  group_by(day_of_week, time_interval) %>%
+  summarize(count = n())
+
+# Create the bar chart
+carfreqplot = ggplot(count_data, aes(y = day_of_week, x = count, fill = time_interval)) +
+  geom_bar(stat = "identity") +
+  geom_text(aes(label = scales::comma(count)), position = position_stack(vjust = 0.5), color = "white", size = 3) +
+  scale_fill_viridis_d() +  
   labs(
-    title = "Car Posting Trends by Location",
-    x = "Time Posted",
-    y = "Posting Count",
-    fill = "Location"
+    title = "Mornings and Mondays Dominate the Craigslist Scene",
+    subtitle = "Peak Posting Patterns by Day of the Week",
+    y = "Day",
+    x = "Number of Car Postings",
+    fill = "Time Intervals"
   ) +
   theme_minimal() +
   theme(
-    legend.position = "bottom"  # Adjust the legend position
+    axis.text.x = element_text(angle = 0, hjust = 1),
+    axis.title.x = element_text(hjust = 0.5),
+    axis.title.y = element_text(angle = 0, vjust = 1, hjust = 0),
+    axis.text.y = element_text(angle = 0, hjust = 1)
   )
+carfreqplot
 
 ##### VISUALIZATION FIVE - HARD #####
 library(ggplot2)
