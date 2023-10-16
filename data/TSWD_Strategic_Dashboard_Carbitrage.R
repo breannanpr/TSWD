@@ -1,6 +1,10 @@
 ### Load Shiny Packages
 library(shiny)
 library(shinydashboard)
+library(ggplot2)
+
+### Load carbitrage data 
+cars = read.csv("carbitrage.csv")
 
 ### Title and Logo
 
@@ -20,7 +24,7 @@ shinyApp(ui, server)
 
 ### Visualization 1: Hybrid vs Non Hybrid sales by location and odometer
 ui <- dashboardPage(
-  ##
+  # ...
   dashboardBody(
     fluidRow(
       column(12, h3("Hybrid vs Non-Hybrid Sales by Location and Odometer")),
@@ -31,9 +35,16 @@ ui <- dashboardPage(
 
 server <- function(input, output) {
   output$hybridPlot <- renderPlot({
-    # Create your hybrid vs non-hybrid plot here using ggplot or plotly
+    ggplot(carbitrage, aes(x = odometer, y = location, color = factor(hybrid))) +
+      geom_point() +
+      scale_color_manual(values = c("0" = "red", "1" = "green")) +
+      labs(x = "Odometer", y = "Location", color = "Hybrid Status") +
+      theme_minimal()
+    # Modify the ggplot code based on your specific data and requirements
   })
 }
+
+shinyApp(ui, server)
 
 shinyApp(ui, server)
 
